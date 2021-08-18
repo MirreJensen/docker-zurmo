@@ -1,29 +1,48 @@
 # Development compose file.
+version: "2.1"
+services:
+  web:
+    build: . # Can't be below this since we have to add files in public/
+    container_name: zurmo
+    hostname: zurmo
+    ports:
+    - "127.0.0.1:8082:80"
+    - "127.0.0.1:1081:1080"
+    - "127.0.0.1:444:443"
+    networks:
+      - zurmo-net
+    volumes:
+    - ./:/var/www
+    links:
+    - db
+    - cache
+    environment:
+    - ENVIRONMENT=DEV
+    - SSL=FALSE
+  db:
+    image: mysql:5.5
+    container_name: mysql-zurmo
+    hostname: mysql-zurmo
+    networks:
+      - zurmo-net
+    ports:
+    - "127.0.0.1:3308:3306"
+    # volumes_from:
+    # - crm_data
+    environment:
+    - MYSQL_ROOT_PASSWORD=docker
+    - MYSQL_DATABASE=zurmo
+    - MYSQL_USER=zurmo
+    - MYSQL_PASSWORD=zurmo
+  cache:
+    image: memcached
+    container_name: memcached-zurmo
+    hostname: memcached-zurmo
+    networks:
+      - zurmo-net
+    ports:
+      - "127.0.0.1:11212:11211"
 
-web:
-  build: . # Can't be below this since we have to add files in public/
-  ports:
-   - "127.0.0.1:8082:80"
-   - "127.0.0.1:1081:1080"
-   - "127.0.0.1:444:443"
-  volumes:
-   - ./:/var/www
-  links:
-   - db
-   - memcache
-  environment:
-   - ENVIRONMENT=DEV
-   - SSL=FALSE
-db:
-  image: mysql:5.5
-  ports:
-   - "127.0.0.1:3308:3306"
-  volumes_from:
-   - crm_data
-  environment:
-   - MYSQL_ROOT_PASSWORD=docker
-   - MYSQL_DATABASE=zurmo
-   - MYSQL_USER=zurmo
-   - MYSQL_PASSWORD=zurmo
-memcache:
-  image: memcached
+networks:
+  zurmo-net:
+    driver: bridge
